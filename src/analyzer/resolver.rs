@@ -1,0 +1,1 @@
+// Resolver Architecture (Skeleton)
