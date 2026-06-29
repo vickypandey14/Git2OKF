@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - 2026-06-29
 
 ### Added
+- Phase 1.5 architectural improvements.
+- Strict internal Rust types (`Framework`, `AnalysisResult`, `LanguageStat`, `FileStats`) to replace loose JSON serialization.
+- Multi-language support that recursively calculates precise percentage breakdowns across codebases.
+- Advanced file counting separating `source_files` and `config_files`.
+- Framework detection additive confidence scoring model (0-100 scale).
+- Structured logging using `tracing` and `tracing-subscriber` across all core modules.
+- Integration test suite (`tests/integration_tests.rs`) using dynamically generated mock directories.
+- `src/lib.rs` created to cleanly expose module library functions to external test suites.
 - Initial project scaffolding for Phase 1.
 - `src/cli`: CLI interface implementation using `clap` for the `analyze` command.
 - `src/git`: Modules for repository cloning, branch detection, and commit counting.
