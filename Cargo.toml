@@ -1,0 +1,18 @@
+[package]
+name = "git2okf"
+version = "0.1.0"
+edition = "2021"
+description = "Convert any Git repository into structured AI-readable knowledge using Open Knowledge Format (OKF)"
+
+[dependencies]
+tokio = { version = "1.35", features = ["full"] }
+reqwest = { version = "0.11", features = ["json"] }
+git2 = "0.18"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+clap = { version = "4.4", features = ["derive"] }
+anyhow = "1.0"
+thiserror = "1.0"
+walkdir = "2.4"
+tempfile = "3.9"
