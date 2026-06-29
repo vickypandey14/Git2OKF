@@ -77,7 +77,7 @@ We successfully transitioned from naive string scanning to actual code understan
 * **Tree-Sitter Query API**: Implemented lightning-fast, S-expression query extraction for Rust, PHP, JavaScript, and Python.
 * **Strict AST Schema**: Built a universal Intermediate Representation (IR) consisting of `RepositoryParseResult`, `ParsedFile`, `ClassNode`, `FunctionNode`, `ImportNode`, and `CallNode`. This schema heavily enriches the data with `id`, `name`, `visibility`, `parameters`, `is_async`, and `parent_class` attributes.
 * **Parser Registry & Engine**: Developed a dynamic `ParserRegistry` to register language-specific parsers without hardcoding, and a `ParserEngine` to orchestrate file traversal and parsing aggregation.
-* **Feature Flag Compilation**: Updated `Cargo.toml` with strict `[features]` flags (`rust`, `php`, `javascript`, `python`), allowing developers to compile the engine selectively and save binary size.
+* **Feature Flag Compilation**: Updated `Cargo.toml` with strict `[features]` flags (`rust`, `php`, `javascript`, `python`). Developers can now compile selectively using commands like `cargo build --release --features "javascript,php"` to massively reduce build times and binary size.
 * **Graph & Analyzer Scaffolding**: Prepared the architectural skeleton for Phase 3 by defining `src/graph/` (nodes, edges, builder) and `src/analyzer/` (symbol table, resolver).
 
 ## Pending Actions / Roadblocks

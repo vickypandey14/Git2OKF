@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dynamic Parser Registry (`ParserRegistry`) and Parser Engine (`ParserEngine`).
 - Isolated Tree-sitter AST tests for Rust, PHP, JavaScript, and Python in `tests/parser_tests.rs`.
 - Scaffolded future architectures for `src/graph` and `src/analyzer`.
-- Cargo `[features]` configuration for selective parser compilation.
+- Added selective compilation via Cargo `[features]` flags (e.g., `cargo build --features "php,javascript"`).
 - Phase 1.75 Pre-Phase 2 mandatory architectural improvements.
 - Trait-Based Detector Architecture (`Detector` trait using `Git2OkfError`).
 - Output Abstraction Layer (`OutputFormatter` trait, JSON & YAML support).
