@@ -1,1 +1,3 @@
-// Output module stub
+pub mod formatter;
+pub mod json;
+pub mod yaml;

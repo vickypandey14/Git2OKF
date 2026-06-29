@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - 2026-06-29
 
 ### Added
+- Phase 1.75 Pre-Phase 2 mandatory architectural improvements.
+- Trait-Based Detector Architecture (`Detector` trait using `Git2OkfError`).
+- Output Abstraction Layer (`OutputFormatter` trait, JSON & YAML support).
+- Repository Validation Layer (`validate_git_url`, `validate_repository_access`).
+- Timeout Protection on clone operations (`tokio::time::timeout` 60s).
+- Shallow clone support via `--depth` parameter.
+- Dependency Detector reading `package.json`, `composer.json`, `requirements.txt`.
+- Isolated test suite in `tests/` (`framework_tests`, `language_tests`, `cleanup_tests`, etc.).
+- GitHub Actions CI Pipeline (`.github/workflows/test.yml`).
 - Phase 1.5 architectural improvements.
 - Strict internal Rust types (`Framework`, `AnalysisResult`, `LanguageStat`, `FileStats`) to replace loose JSON serialization.
 - Multi-language support that recursively calculates precise percentage breakdowns across codebases.

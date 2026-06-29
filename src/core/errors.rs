@@ -17,6 +17,9 @@ pub enum Git2OkfError {
     #[error("Detection error: {0}")]
     DetectionError(String),
 
+    #[error("Timeout error: {0}")]
+    TimeoutError(String),
+
     #[error("Unknown error: {0}")]
     Unknown(String),
 }

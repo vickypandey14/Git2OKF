@@ -39,5 +39,6 @@ pub struct AnalysisResult {
     pub branch: String,
     pub languages: Vec<LanguageStat>,
     pub framework: FrameworkDetection,
+    pub dependencies: Vec<crate::detector::dependency::Dependency>,
     pub files: FileStats,
 }
