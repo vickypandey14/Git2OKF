@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - 2026-06-29
 
 ### Added
+- Phase 2 AST Parser Intelligence Architecture.
+- `tree-sitter` integration with `tree-sitter-rust`, `tree-sitter-php`, `tree-sitter-javascript`, and `tree-sitter-python`.
+- Tree-sitter Query API implementation for robust syntax extraction.
+- Strict Intermediate Representation (IR) AST Schema (`ParsedFile`, `RepositoryParseResult`, `ClassNode`, `FunctionNode`, `CallNode`, `ImportNode`).
+- Dynamic Parser Registry (`ParserRegistry`) and Parser Engine (`ParserEngine`).
+- Isolated Tree-sitter AST tests for Rust, PHP, JavaScript, and Python in `tests/parser_tests.rs`.
+- Scaffolded future architectures for `src/graph` and `src/analyzer`.
+- Cargo `[features]` configuration for selective parser compilation.
 - Phase 1.75 Pre-Phase 2 mandatory architectural improvements.
 - Trait-Based Detector Architecture (`Detector` trait using `Git2OkfError`).
 - Output Abstraction Layer (`OutputFormatter` trait, JSON & YAML support).
