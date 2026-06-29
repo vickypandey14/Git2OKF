@@ -61,5 +61,16 @@ Replaced loose JSON structures with strict, memory-safe Rust structs:
 * Implemented `integration_tests.rs` containing rigorous tests for Laravel, Next.js, and Rust Cargo projects.
 * Uses the `tempfile` crate to dynamically generate mock directory structures and file signatures in memory to instantly verify that the `detect_language` and `detect_framework` functions compute the correct confidence scores and percentages.
 
+## 9. Phase 1.75 Architectural Enhancements
+Before moving to Phase 2, the following mandatory structural improvements were made:
+* **Trait-Based Detector Architecture**: Created a highly extensible `Detector` trait (`fn detect(&self, path: &Path) -> Result<Self::Output, Git2OkfError>`) in `src/detector/mod.rs` and refactored `LanguageDetector`, `FrameworkDetector`, and `DependencyDetector` into struct instances that safely implement this trait.
+* **Output Abstraction Layer**: Built an `OutputFormatter` trait (`src/output/`) with implemented `JsonFormatter` and `YamlFormatter` to allow robust output swapping.
+* **Repository Validation Layer**: Implemented `src/core/validator.rs` (`validate_git_url` and `validate_repository_access`) to catch malformed URLs before any cloning attempts.
+* **Timeout Protection & Shallow Cloning**: Wrapped the clone logic inside `tokio::task::spawn_blocking` and a `tokio::time::timeout` of 60 seconds to prevent indefinite network hangs. Added support for shallow cloning (`--depth`) to drastically speed up fetching massive repositories.
+* **Dependency Detector**: Implemented `src/detector/dependency.rs` which safely parses `package.json`, `composer.json`, and `requirements.txt` to extract raw dependencies and version numbers.
+* **Expanded CLI (`src/cli/args.rs`)**: Added argument support for `--format <json|yaml>`, `--output <filename>`, `--verbose` (dynamically adjusting `tracing` log levels), and `--depth <number>`.
+* **Isolated Testing Infrastructure**: Migrated entirely away from embedding tests in source files. Created granular, isolated test files inside the `tests/` directory (`framework_tests.rs`, `language_tests.rs`, `cleanup_tests.rs`, etc.). Added a `cleanup_tests.rs` to guarantee temporary workspaces are permanently wiped.
+* **CI Pipeline**: Created `.github/workflows/test.yml` enforcing strict formatting, zero-warning clippy runs, and successful test suites on every push to main.
+
 ## Pending Actions / Roadblocks
 * **Rust Environment:** Rust was successfully installed on the local machine via `rustup`. However, compilation (`cargo test`) failed because the **Microsoft Visual Studio C++ Build Tools** (specifically the `link.exe` linker and C compiler required by the `git2` crate) are missing from the host machine. These must be installed to compile and run the CLI.
