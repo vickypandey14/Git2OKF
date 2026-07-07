@@ -5,12 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2026-06-29
-
-> [!WARNING]
-> **Phase 2 Implementation Freeze**: Phase 2 is architecturally implemented but **NOT verified** on the local Windows environment due to native C++ compiler dependency requirements (required by tree-sitter wrappers). An architecture freeze is in place. No new features, code changes, or Phase 3 additions will occur until verification commands listed in [verification.md](file:///c:/Users/vicky/OneDrive/Desktop/Git2OKF/verification.md) are run and pass.
+## [Unreleased] - 2026-07-08
 
 ### Added
+- Added `docs/wsl_setup.md` guiding environment packages installation and Rust toolchain setup under WSL.
+- Added `docs/ROADMAP.md` outlining project phases 1 through 7.
+- Added `verification.md` tracking build, styling, clippy lint, and unit/integration testing checklists.
+- Added SSH-style Git URL parsing support to `get_repository_name`.
 - Phase 2 AST Parser Intelligence Architecture.
 - `tree-sitter` integration with `tree-sitter-rust`, `tree-sitter-php`, `tree-sitter-javascript`, and `tree-sitter-python`.
 - Tree-sitter Query API implementation for robust syntax extraction.
