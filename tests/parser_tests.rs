@@ -142,5 +142,5 @@ fn test_python_parser_extraction() {
     assert_eq!(result.classes.len(), 1);
     assert_eq!(result.classes[0].name, "Processor");
     assert_eq!(result.imports.len(), 2);
-    assert_eq!(result.calls.len(), 2); // print and Processor().process()
+    assert_eq!(result.calls.len(), 3); // print, Processor(), and Processor().process()
 }
