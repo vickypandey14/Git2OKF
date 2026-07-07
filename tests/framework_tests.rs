@@ -1,4 +1,4 @@
-use git2okf::core::types::{Framework, FrameworkDetection, LanguageStat};
+use git2okf::core::types::{Framework, LanguageStat};
 use git2okf::detector::framework::FrameworkDetector;
 use git2okf::detector::Detector;
 use std::fs::{self, File};
