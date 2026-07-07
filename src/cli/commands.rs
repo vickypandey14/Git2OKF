@@ -1,24 +1,29 @@
 use crate::core::errors::Git2OkfError;
-use crate::git::clone::clone_repository;
-use crate::git::metadata::extract_metadata;
-use crate::detector::language::LanguageDetector;
-use crate::detector::framework::FrameworkDetector;
-use crate::detector::Detector;
 use crate::core::types::AnalysisResult;
 use crate::core::validator::validate_repository_access;
+use crate::detector::framework::FrameworkDetector;
+use crate::detector::language::LanguageDetector;
+use crate::detector::Detector;
+use crate::git::clone::clone_repository;
+use crate::git::metadata::extract_metadata;
 use crate::output::formatter::OutputFormatter;
 use crate::output::json::JsonFormatter;
 use crate::output::yaml::YamlFormatter;
-use tempfile::tempdir;
-use tracing::{info, debug};
 use std::fs;
+use tempfile::tempdir;
+use tracing::{debug, info};
 
-pub async fn handle_analyze(url: &str, format: &str, output_path: Option<&str>, depth: Option<u32>) -> Result<(), Git2OkfError> {
+pub async fn handle_analyze(
+    url: &str,
+    format: &str,
+    output_path: Option<&str>,
+    depth: Option<u32>,
+) -> Result<(), Git2OkfError> {
     info!("Starting analysis for repository: {}", url);
-    
+
     // 0. Validate Repository
     validate_repository_access(url)?;
-    
+
     // 1. Create temporary directory
     let temp_dir = tempdir().map_err(Git2OkfError::IoError)?;
     let clone_path = temp_dir.path();
@@ -31,18 +36,21 @@ pub async fn handle_analyze(url: &str, format: &str, output_path: Option<&str>, 
     // 3. Extract metadata
     info!("Extracting repository metadata...");
     let (repo_name, branch, commit_count) = extract_metadata(&repo, url)?;
-    debug!("Repo: {}, Branch: {}, Commits: {}", repo_name, branch, commit_count);
+    debug!(
+        "Repo: {}, Branch: {}, Commits: {}",
+        repo_name, branch, commit_count
+    );
 
     // 4. Detect language and files
     info!("Analyzing files and languages...");
     let lang_detector = LanguageDetector;
     let (languages, file_stats) = lang_detector.detect(clone_path)?;
-    
+
     // 5. Detect framework
     info!("Detecting framework...");
     let fw_detector = FrameworkDetector::new(languages.clone());
     let framework_detection = fw_detector.detect(clone_path)?;
-    
+
     // 5.5 Detect dependencies
     info!("Detecting dependencies...");
     let dep_detector = crate::detector::dependency::DependencyDetector;

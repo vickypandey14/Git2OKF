@@ -36,10 +36,18 @@ impl Detector for FrameworkDetector {
             match lang.name.as_str() {
                 "php" => {
                     let mut conf = 0;
-                    if has_file("composer.json") { conf += 30; }
-                    if has_file("artisan") { conf += 50; }
-                    if has_dir("app/Console") || has_dir("routes") { conf += 15; }
-                    if conf > 0 { update_best(Framework::Laravel, conf); }
+                    if has_file("composer.json") {
+                        conf += 30;
+                    }
+                    if has_file("artisan") {
+                        conf += 50;
+                    }
+                    if has_dir("app/Console") || has_dir("routes") {
+                        conf += 15;
+                    }
+                    if conf > 0 {
+                        update_best(Framework::Laravel, conf);
+                    }
                 }
                 "javascript" | "typescript" => {
                     let mut next_conf = 0;
@@ -54,7 +62,10 @@ impl Detector for FrameworkDetector {
                         express_conf += 20;
                     }
 
-                    if has_file("next.config.js") || has_file("next.config.mjs") || has_file("next.config.ts") {
+                    if has_file("next.config.js")
+                        || has_file("next.config.mjs")
+                        || has_file("next.config.ts")
+                    {
                         next_conf += 70;
                     }
 
@@ -80,24 +91,40 @@ impl Detector for FrameworkDetector {
                         django_conf += 20;
                         flask_conf += 20;
                     }
-                    if has_file("manage.py") { django_conf += 70; }
-                    if has_file("app.py") || has_file("main.py") { flask_conf += 30; }
+                    if has_file("manage.py") {
+                        django_conf += 70;
+                    }
+                    if has_file("app.py") || has_file("main.py") {
+                        flask_conf += 30;
+                    }
 
                     update_best(Framework::Django, django_conf);
                     update_best(Framework::Flask, flask_conf);
                 }
                 "rust" => {
                     let mut rust_conf = 0;
-                    if has_file("Cargo.toml") { rust_conf += 50; }
-                    if has_dir("src") { rust_conf += 20; }
-                    if has_file("Cargo.lock") { rust_conf += 25; }
+                    if has_file("Cargo.toml") {
+                        rust_conf += 50;
+                    }
+                    if has_dir("src") {
+                        rust_conf += 20;
+                    }
+                    if has_file("Cargo.lock") {
+                        rust_conf += 25;
+                    }
                     update_best(Framework::RustCargo, rust_conf);
                 }
                 "java" => {
                     let mut spring_conf = 0;
-                    if has_file("pom.xml") || has_file("build.gradle") { spring_conf += 40; }
-                    if has_dir("src/main/java") { spring_conf += 20; }
-                    if has_file("src/main/resources/application.properties") || has_file("src/main/resources/application.yml") {
+                    if has_file("pom.xml") || has_file("build.gradle") {
+                        spring_conf += 40;
+                    }
+                    if has_dir("src/main/java") {
+                        spring_conf += 20;
+                    }
+                    if has_file("src/main/resources/application.properties")
+                        || has_file("src/main/resources/application.yml")
+                    {
                         spring_conf += 35;
                     }
                     update_best(Framework::SpringBoot, spring_conf);
@@ -110,7 +137,10 @@ impl Detector for FrameworkDetector {
             highest_confidence = 100;
         }
 
-        debug!("Detected framework {:?} with confidence {}", best_framework, highest_confidence);
+        debug!(
+            "Detected framework {:?} with confidence {}",
+            best_framework, highest_confidence
+        );
 
         Ok(FrameworkDetection {
             framework: best_framework,

@@ -20,8 +20,8 @@ impl Parser for PhpParser {
         let source_code = fs::read_to_string(file_path).map_err(Git2OkfError::IoError)?;
 
         let mut parser = TsParser::new();
-        // tree_sitter_php crate usually exposes language_php() or just language()
-        let language = tree_sitter_php::language_php(); 
+        // tree_sitter_php crate exposes language()
+        let language = tree_sitter_php::language();
         parser
             .set_language(language)
             .map_err(|e| Git2OkfError::DetectionError(e.to_string()))?;
@@ -50,8 +50,15 @@ impl Parser for PhpParser {
                     for cap in m.captures {
                         let node = cap.node;
                         functions.push(FunctionNode {
-                            id: format!("fn_{}_{}", node.start_position().row, node.start_position().column),
-                            name: node.utf8_text(source_code.as_bytes()).unwrap_or("").to_string(),
+                            id: format!(
+                                "fn_{}_{}",
+                                node.start_position().row,
+                                node.start_position().column
+                            ),
+                            name: node
+                                .utf8_text(source_code.as_bytes())
+                                .unwrap_or("")
+                                .to_string(),
                             line_start: node.start_position().row,
                             line_end: node.end_position().row,
                             visibility: None,
@@ -68,13 +75,21 @@ impl Parser for PhpParser {
 
         // 2. Classes
         if let Ok(class_query) = Query::new(language, "(class_declaration name: (name) @name)") {
-            let class_matches = cursor.matches(&class_query, tree.root_node(), source_code.as_bytes());
+            let class_matches =
+                cursor.matches(&class_query, tree.root_node(), source_code.as_bytes());
             for m in class_matches {
                 for cap in m.captures {
                     let node = cap.node;
                     classes.push(ClassNode {
-                        id: format!("class_{}_{}", node.start_position().row, node.start_position().column),
-                        name: node.utf8_text(source_code.as_bytes()).unwrap_or("").to_string(),
+                        id: format!(
+                            "class_{}_{}",
+                            node.start_position().row,
+                            node.start_position().column
+                        ),
+                        name: node
+                            .utf8_text(source_code.as_bytes())
+                            .unwrap_or("")
+                            .to_string(),
                         line_start: node.start_position().row,
                         line_end: node.end_position().row,
                         visibility: None,
@@ -87,12 +102,16 @@ impl Parser for PhpParser {
 
         // 3. Imports
         if let Ok(import_query) = Query::new(language, "(namespace_use_declaration) @use") {
-            let import_matches = cursor.matches(&import_query, tree.root_node(), source_code.as_bytes());
+            let import_matches =
+                cursor.matches(&import_query, tree.root_node(), source_code.as_bytes());
             for m in import_matches {
                 for cap in m.captures {
                     let node = cap.node;
                     imports.push(ImportNode {
-                        name: node.utf8_text(source_code.as_bytes()).unwrap_or("").to_string(),
+                        name: node
+                            .utf8_text(source_code.as_bytes())
+                            .unwrap_or("")
+                            .to_string(),
                         line_start: node.start_position().row,
                         line_end: node.end_position().row,
                     });
@@ -114,7 +133,10 @@ impl Parser for PhpParser {
                     for cap in m.captures {
                         let node = cap.node;
                         calls.push(CallNode {
-                            name: node.utf8_text(source_code.as_bytes()).unwrap_or("").to_string(),
+                            name: node
+                                .utf8_text(source_code.as_bytes())
+                                .unwrap_or("")
+                                .to_string(),
                             line_start: node.start_position().row,
                             line_end: node.end_position().row,
                         });

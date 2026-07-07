@@ -14,26 +14,26 @@ pub enum Framework {
     Unknown,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FrameworkDetection {
     pub framework: Framework,
     pub confidence: u8,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LanguageStat {
     pub name: String,
     pub percentage: u8,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FileStats {
     pub total_files: usize,
     pub source_files: usize,
     pub config_files: usize,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AnalysisResult {
     pub repository: String,
     pub branch: String,

@@ -6,7 +6,7 @@ pub trait Detector {
     fn detect(&self, path: &Path) -> Result<Self::Output, Git2OkfError>;
 }
 
-pub mod language;
-pub mod framework;
-pub mod version;
 pub mod dependency;
+pub mod framework;
+pub mod language;
+pub mod version;

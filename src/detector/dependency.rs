@@ -1,12 +1,12 @@
 use crate::core::errors::Git2OkfError;
 use crate::detector::Detector;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs;
 use std::path::Path;
 use tracing::debug;
-use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Dependency {
     pub name: String,
     pub version: String,
@@ -26,7 +26,8 @@ impl Detector for DependencyDetector {
         if pkg_json_path.exists() {
             if let Ok(content) = fs::read_to_string(&pkg_json_path) {
                 if let Ok(json) = serde_json::from_str::<Value>(&content) {
-                    if let Some(dependencies) = json.get("dependencies").and_then(|v| v.as_object()) {
+                    if let Some(dependencies) = json.get("dependencies").and_then(|v| v.as_object())
+                    {
                         for (name, version) in dependencies {
                             deps.push(Dependency {
                                 name: name.clone(),

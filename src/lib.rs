@@ -1,9 +1,9 @@
-pub mod core;
-pub mod cli;
-pub mod git;
-pub mod detector;
-pub mod parser;
 pub mod analyzer;
+pub mod cli;
+pub mod core;
+pub mod detector;
+pub mod git;
 pub mod graph;
 pub mod okf;
 pub mod output;
+pub mod parser;

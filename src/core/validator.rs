@@ -4,10 +4,12 @@ pub fn validate_git_url(url: &str) -> Result<(), Git2OkfError> {
     if url.trim().is_empty() {
         return Err(Git2OkfError::ConfigError("URL cannot be empty".to_string()));
     }
-    
+
     // Very basic check, in reality we'd parse with URL crate
     if !url.starts_with("http://") && !url.starts_with("https://") && !url.starts_with("git@") {
-        return Err(Git2OkfError::ConfigError("Invalid or unsupported Git URL protocol".to_string()));
+        return Err(Git2OkfError::ConfigError(
+            "Invalid or unsupported Git URL protocol".to_string(),
+        ));
     }
 
     Ok(())

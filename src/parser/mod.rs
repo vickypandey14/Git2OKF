@@ -2,8 +2,8 @@ use crate::core::errors::Git2OkfError;
 use std::path::Path;
 
 pub mod ast;
-pub mod registry;
 pub mod engine;
+pub mod registry;
 
 #[cfg(feature = "rust")]
 pub mod rust_parser;

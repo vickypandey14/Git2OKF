@@ -1,5 +1,5 @@
 use crate::core::errors::Git2OkfError;
-use crate::parser::ast::{ParsedFile, RepositoryParseResult};
+use crate::parser::ast::RepositoryParseResult;
 use crate::parser::registry::ParserRegistry;
 use std::path::Path;
 use tracing::{debug, info};
@@ -14,7 +14,11 @@ impl ParserEngine {
         Self { registry }
     }
 
-    pub fn parse_repository(&self, repo_name: &str, repo_path: &Path) -> Result<RepositoryParseResult, Git2OkfError> {
+    pub fn parse_repository(
+        &self,
+        repo_name: &str,
+        repo_path: &Path,
+    ) -> Result<RepositoryParseResult, Git2OkfError> {
         info!("Starting parser engine on repository: {}", repo_name);
         let mut parsed_files = Vec::new();
         let mut total_functions = 0;

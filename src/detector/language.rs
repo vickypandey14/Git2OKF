@@ -32,12 +32,16 @@ impl Detector for LanguageDetector {
                     "json" | "toml" | "yaml" | "yml" | "xml" | "ini" | "env" | "config" => {
                         config_files += 1;
                     }
-                    "rs" | "js" | "jsx" | "ts" | "tsx" | "py" | "php" | "java" | "go" | "c" | "cpp" | "h" | "cs" | "rb" | "swift" | "kt" => {
+                    "rs" | "js" | "jsx" | "ts" | "tsx" | "py" | "php" | "java" | "go" | "c"
+                    | "cpp" | "h" | "cs" | "rb" | "swift" | "kt" => {
                         source_files += 1;
                         *ext_counts.entry(ext).or_insert(0) += 1;
                     }
                     _ => {
-                        if file_name == "dockerfile" || file_name == "makefile" || file_name.ends_with("rc") {
+                        if file_name == "dockerfile"
+                            || file_name == "makefile"
+                            || file_name.ends_with("rc")
+                        {
                             config_files += 1;
                         }
                     }
@@ -86,7 +90,10 @@ impl Detector for LanguageDetector {
             config_files,
         };
 
-        debug!("Finished analysis: {} total files, {} source files, {} config files", total_files, source_files, config_files);
+        debug!(
+            "Finished analysis: {} total files, {} source files, {} config files",
+            total_files, source_files, config_files
+        );
         Ok((languages, stats))
     }
 }

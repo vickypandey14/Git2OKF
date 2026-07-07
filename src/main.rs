@@ -8,13 +8,22 @@ use tracing_subscriber::EnvFilter;
 async fn main() {
     let cli = Cli::parse();
 
-    let filter = if cli.verbose { "git2okf=debug" } else { "git2okf=info" };
+    let filter = if cli.verbose {
+        "git2okf=debug"
+    } else {
+        "git2okf=info"
+    };
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::new(filter))
         .init();
 
     match &cli.command {
-        Commands::Analyze { url, format, output, depth } => {
+        Commands::Analyze {
+            url,
+            format,
+            output,
+            depth,
+        } => {
             if let Err(e) = handle_analyze(url, format, output.as_deref(), *depth).await {
                 tracing::error!("Error analyzing repository: {}", e);
                 process::exit(1);

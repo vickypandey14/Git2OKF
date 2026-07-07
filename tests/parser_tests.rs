@@ -10,7 +10,7 @@ fn test_rust_parser_extraction() {
     let dir = tempdir().unwrap();
     let file_path = dir.path().join("test_file.rs");
     let mut file = File::create(&file_path).unwrap();
-    
+
     let code = r#"
         use std::collections::HashMap;
 
@@ -22,7 +22,7 @@ fn test_rust_parser_extraction() {
             println!("Hello");
         }
     "#;
-    
+
     file.write_all(code.as_bytes()).unwrap();
 
     let parser = RustParser::new();
@@ -49,7 +49,7 @@ fn test_php_parser_extraction() {
     let dir = tempdir().unwrap();
     let file_path = dir.path().join("test_file.php");
     let mut file = File::create(&file_path).unwrap();
-    
+
     let code = r#"
         <?php
         use Illuminate\Support\Facades\Route;
@@ -60,7 +60,7 @@ fn test_php_parser_extraction() {
             }
         }
     "#;
-    
+
     file.write_all(code.as_bytes()).unwrap();
 
     let parser = PhpParser::new();
@@ -84,7 +84,7 @@ fn test_javascript_parser_extraction() {
     let dir = tempdir().unwrap();
     let file_path = dir.path().join("test_file.js");
     let mut file = File::create(&file_path).unwrap();
-    
+
     let code = r#"
         import React from 'react';
 
@@ -96,7 +96,7 @@ fn test_javascript_parser_extraction() {
             console.log("Running");
         };
     "#;
-    
+
     file.write_all(code.as_bytes()).unwrap();
 
     let parser = JavascriptParser::new();
@@ -120,7 +120,7 @@ fn test_python_parser_extraction() {
     let dir = tempdir().unwrap();
     let file_path = dir.path().join("test_file.py");
     let mut file = File::create(&file_path).unwrap();
-    
+
     let code = r#"
         import os
         from sys import path
@@ -132,7 +132,7 @@ fn test_python_parser_extraction() {
         def start():
             Processor().process()
     "#;
-    
+
     file.write_all(code.as_bytes()).unwrap();
 
     let parser = PythonParser::new();

@@ -14,21 +14,21 @@ use tempfile::tempdir;
 fn test_laravel_detection() {
     let dir = tempdir().unwrap();
     let path = dir.path();
-    
+
     // Create mock files
     File::create(path.join("composer.json")).unwrap();
     File::create(path.join("artisan")).unwrap();
     fs::create_dir(path.join("routes")).unwrap();
-    
+
     File::create(path.join("index.php")).unwrap();
     File::create(path.join("app.php")).unwrap();
     File::create(path.join("script.js")).unwrap();
-    
+
     // Test language
     let (languages, stats) = analyze_files_and_languages(path).unwrap();
     assert_eq!(stats.total_files, 5);
     assert_eq!(stats.source_files, 3); // 2 php + 1 js
-    
+
     let framework_det = detect_framework(path, &languages).unwrap();
     assert_eq!(framework_det.framework, Framework::Laravel);
     assert!(framework_det.confidence >= 80);
@@ -38,17 +38,17 @@ fn test_laravel_detection() {
 fn test_nextjs_detection() {
     let dir = tempdir().unwrap();
     let path = dir.path();
-    
+
     File::create(path.join("package.json")).unwrap();
     File::create(path.join("next.config.js")).unwrap();
     fs::create_dir(path.join("pages")).unwrap();
-    
+
     File::create(path.join("app.tsx")).unwrap();
     File::create(path.join("index.ts")).unwrap();
-    
+
     let (languages, _) = analyze_files_and_languages(path).unwrap();
     let framework_det = detect_framework(path, &languages).unwrap();
-    
+
     assert_eq!(framework_det.framework, Framework::NextJs);
 }
 
@@ -56,13 +56,13 @@ fn test_nextjs_detection() {
 fn test_rust_detection() {
     let dir = tempdir().unwrap();
     let path = dir.path();
-    
+
     File::create(path.join("Cargo.toml")).unwrap();
     fs::create_dir(path.join("src")).unwrap();
     File::create(path.join("src").join("main.rs")).unwrap();
-    
+
     let (languages, _) = analyze_files_and_languages(path).unwrap();
     let framework_det = detect_framework(path, &languages).unwrap();
-    
+
     assert_eq!(framework_det.framework, Framework::RustCargo);
 }
