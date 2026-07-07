@@ -33,7 +33,27 @@ src/graph/
 
 ---
 
-## 2. Node Design
+## 2. Separate Identity Layers
+
+To isolate graph implementation details from consumer logic, the graph uses three separate layers of identity:
+
+1. **`CanonicalIdentifier` (String)**:
+   * **Role**: The human-readable, stable, and deterministic unique path identifying the symbol globally (e.g., `git2okf://my-repo/src/core/errors.rs#ast::ClassNode`).
+   * **Scope**: Public API, serialization, cross-file resolution keys, and external reference targets.
+2. **`NodeId` (u64 Wrapper)**:
+   * **Role**: A lightweight, numeric identifier unique to the graph instance.
+   * **Scope**: Public Graph API for node-to-node queries, edge declarations, and traversal indices.
+3. **`NodeIndex` (Petgraph Internal Index)**:
+   * **Role**: The memory index structure native to the `petgraph` library.
+   * **Scope**: **Strictly private** to `storage.rs`. The public graph API never exposes `NodeIndex` to external modules to shield consumers from internal library dependencies.
+
+### Identity Flow
+* Consumers query nodes using `CanonicalIdentifier` or `NodeId`.
+* `storage.rs` maps `NodeId` to the private `NodeIndex` internally during graph storage operations.
+
+---
+
+## 3. Node Design
 
 Nodes represent structural elements in the repository. We define them with a strict, serializable layout.
 
@@ -56,26 +76,24 @@ pub enum NodeType {
     Enum,
     Function,
     Method,
+    Macro,
+    TypeAlias,
+    Constant,
     Import,
     Dependency,
     Language,
     Framework,
+    Unknown,
 }
 ```
 
-### Node Identity Strategy
+### First-Class Nodes vs. Metadata
 
-To optimize graph operations, we separate internal graph keys from external deterministic identifiers:
-* **Internal Graph Key (`NodeId`)**: A lightweight, numeric wrapper `NodeId(u64)` (mapping to `petgraph::graph::NodeIndex`). This guarantees fast traversals, comparison, and minimal memory usage.
-* **Stable External URI (`canonical_identifier`)**: A deterministic String representation of the node's path (e.g., `git2okf://repo-name/src/main.rs#main`). This provides collision resistance and stable serialization across runs.
-
-#### Tradeoffs Evaluated
-
-| Strategy | Pros | Cons | Decision |
-|---|---|---|---|
-| **String IDs Only** | Simple serialization, easy debugging. | Large memory footprint, slower comparisons. | Rejected as primary |
-| **Numeric IDs Only** | High speed, optimal memory footprint. | Unstable across runs, hard to serialize. | Rejected as primary |
-| **Hybrid Identity** | Fast internal operations with stable external mappings. | Slight lookup overhead during indexing. | **Recommended** |
+* **First-Class Nodes**:
+  * `Macro`, `TypeAlias`, `Constant` are designated as **first-class node types** to allow direct tracking of usage linkages, external imports, and macro expansions.
+  * Structural scopes (`Repository`, `Workspace`, `Package`, `Directory`, `File`, `Namespace`, `Interface`, `Trait`, `Struct`, `Enum`, `Class`, `Method`, `Function`) remain first-class nodes.
+* **Metadata-Only representation**:
+  * Local variables remain encapsulated within their enclosing scopes' metadata maps rather than forming graph nodes.
 
 ### Node Struct
 
@@ -87,9 +105,9 @@ pub struct NodeId(pub u64);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Node {
-    /// Numeric ID for internal graph operations
+    /// Numeric ID for graph API operations
     pub id: NodeId,
-    /// Stable, deterministic URI for serialization and stable reference
+    /// Stable deterministic URI for serialization and stable references
     pub canonical_identifier: String,
     /// The name of the symbol or file (e.g., "UserController", "process_data")
     pub name: String,
@@ -104,7 +122,7 @@ pub struct Node {
 
 ---
 
-## 3. Edge Design
+## 4. Edge Design
 
 Edges represent directed relationships between nodes.
 
@@ -150,7 +168,7 @@ pub struct Edge {
 
 ---
 
-## 4. GraphRepresentation Definition
+## 5. GraphRepresentation Definition
 
 We define `GraphRepresentation` as the master struct that aggregates the graph storage engine, indices, lookup mappings, and statistics.
 
@@ -165,7 +183,7 @@ pub struct GraphRepresentation {
     pub canonical_index: HashMap<String, NodeId>,
     /// Global Symbol Table mapping symbol names to target NodeIds
     pub symbol_table: SymbolTable,
-    /// Repository metadata (e.g., repository_name, branch, commit_count)
+    /// Structural repository metadata (excludes git-history details)
     pub repository_metadata: RepositoryMetadata,
     /// Computed metrics for static analysis summary
     pub statistics: GraphStatistics,
@@ -173,11 +191,12 @@ pub struct GraphRepresentation {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RepositoryMetadata {
+    /// Name of the repository
     pub name: String,
-    pub active_branch: String,
-    pub total_commits: usize,
-    pub languages: Vec<(String, u8)>, // (language, percentage)
-    pub frameworks: Vec<(String, u8)>, // (framework, confidence)
+    /// Main classification language
+    pub primary_language: String,
+    /// List of root directories included in the graph
+    pub source_directories: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -191,30 +210,23 @@ pub struct GraphStatistics {
 
 ---
 
-## 5. Architectural Evaluation of Nodes & Edges
+## 6. Unresolved Symbol Resolution Strategy
 
-To build a language-agnostic repository graph, we categorize AST properties into first-class nodes/edges or metadata fields.
+In multi-file codebases, references to external libraries or unparsed modules often result in unresolved symbols. We design a stable strategy to support these references.
 
-### First-Class Nodes vs. Metadata
+### Evaluation of Options
 
-* **Repository, Workspace, Package, Crate, Directory, Namespace, Interface, Trait, Struct, Enum, Class**: Configured as first-class nodes. These represent core scoping boundaries, directory structure components, and structural API contracts.
-* **Variable, Constant, Macro, TypeAlias**: Configured as metadata properties on their declaring Scope/File nodes (to prevent graph bloating), unless they are exported globally.
-
-### Phase 3 Edges vs. Deferred Edges
-
-* **Phase 3 Core Edges (Immediate)**:
-  * `Calls`, `Imports`, `Declares`, `Uses`, `Extends`, `Implements`, `DependsOn`, `BelongsTo`, `Contains`, `References`.
-  * `Exports`: Tracks module borders.
-  * `InstanceOf`: Declares type linkages.
-  * `AnnotatedWith`: Links functions/classes to decorators/annotations.
-  * `Overrides`: Direct inheritance relationship.
-* **Deferred Edges (Phase 4 / Advanced Analysis)**:
-  * `Reads`, `Writes`: Relates to variable data-flow analysis, deferred to prevent performance degradation.
-  * `Returns`, `Throws`: Represented as function/method metadata properties rather than edges.
+1. **Resolution Status Enums**:
+   * *Tradeoff*: Simple to flag, but fails to define a target node for relational edge mapping.
+2. **Dedicated Unresolved Node Types**:
+   * *Tradeoff*: Explicit classification, but bloats node types and creates design redundancies.
+3. **Placeholder Nodes with Metadata Flag (Recommended)**:
+   * *Tradeoff*: Create placeholder nodes when a symbol cannot be resolved locally. The placeholder node is marked with `NodeType::Unknown` or `external: true` inside metadata, and assigned an external URI: `external://[package]/[symbol]`.
+   * *Justification*: This approach preserves graph connectivity and allows edges (`Calls`, `Extends`) to map cleanly to external endpoints.
 
 ---
 
-## 6. Repository Hierarchy
+## 7. Repository Hierarchy
 
 We enforce a strict containment hierarchy:
 
@@ -228,7 +240,7 @@ This containment hierarchy improves other systems:
 
 ---
 
-## 7. Deterministic Node Identity Strategy
+## 8. Deterministic Node Identity Strategy
 
 Stable external identifiers are built using a URI schema format:
 
@@ -246,7 +258,7 @@ $$\text{git2okf://[repo-name]/[package-name]/[relative-file-path]\#[fully-qualif
 
 ---
 
-## 8. Graph Builder Pipeline
+## 9. Graph Builder Pipeline
 
 Converting `RepositoryParseResult` to `GraphRepresentation` is implemented as a multi-pass pipeline.
 
@@ -265,14 +277,14 @@ graph TD
 
 ### Pipeline Details
 
-1. **Node Extraction (Pass 1)**: Traverse all files in the `RepositoryParseResult`. Extract metadata and create nodes for every file, class, trait, function, and external dependency.
+1. **Node Extraction (Pass 1)**: Traverse all files in the `RepositoryParseResult`. Extract metadata and create nodes for every file, class, trait, function, macro, type alias, constant, and external dependency.
 2. **Containment Linkage (Pass 2)**: Create structural hierarchy edges. Link files to their declared classes and functions, and classes to their declared methods (`Declares` / `Contains` edges).
 3. **Symbol Table Generation (Pass 3)**: Traverse the extracted declaration nodes and index their names globally (e.g., mapping class `UserController` to its file node and fully-qualified namespace path).
 4. **Resolution & Relationship Linking (Pass 4)**: Iterate through all unresolved references (imports, require calls, and method invocations). Query the symbol table to resolve the targets. Create directed edges (e.g., `Calls`, `Imports`, `Uses`) between the caller node and target node.
 
 ---
 
-## 9. Symbol Resolution Strategy
+## 10. Symbol Resolution Strategy
 
 Symbol resolution links identifiers (like `User::find()` or `import { component }`) to their actual definitions across different files.
 
@@ -304,7 +316,7 @@ pub struct SymbolTable {
 
 ---
 
-## 10. Graph Storage Strategy
+## 11. Graph Storage Strategy
 
 To represent the graph structure in memory, we evaluate four options:
 
@@ -330,24 +342,24 @@ use petgraph::stable_graph::{NodeIndex, StableDiGraph};
 
 pub struct GraphStorage {
     /// The primary petgraph structure
-    pub graph: StableDiGraph<Node, Edge>,
+    graph: StableDiGraph<Node, Edge>,
     /// Fast index mapping deterministic Node IDs to petgraph NodeIndices
-    pub node_map: HashMap<String, NodeIndex>,
+    node_map: HashMap<NodeId, NodeIndex>,
 }
 ```
 *Justification*: Petgraph provides raw storage and graph algorithms, while the wrapper index `node_map` provides $O(1)$ lookups. This avoids raw index tracking during graph construction.
 
 ---
 
-## 11. Serialization Strategy
+## 12. Serialization Strategy
 
 The `serializer.rs` module will serialize `GraphRepresentation` for different consumers:
 
 * **JSON Output**: Exports a flat array of nodes and edges, compatible with graph visualizers (D3.js, Cytoscape):
   ```json
   {
-    "nodes": [ { "id": "file_1", "type": "File", "name": "main.rs" } ],
-    "edges": [ { "source": "file_1", "target": "fn_1", "type": "Declares" } ]
+    "nodes": [ { "id": 1, "canonical_identifier": "file_1", "type": "File", "name": "main.rs" } ],
+    "edges": [ { "source": 1, "target": 2, "type": "Declares" } ]
   }
   ```
 * **YAML Output**: Human-readable hierarchical configuration format.
@@ -355,7 +367,7 @@ The `serializer.rs` module will serialize `GraphRepresentation` for different co
 
 ---
 
-## 12. Performance Considerations
+## 13. Performance Considerations
 
 For larger projects (e.g., 10,000 files, 100,000 functions, and millions of relationships), building the graph can become a memory and CPU bottleneck.
 
@@ -366,7 +378,7 @@ For larger projects (e.g., 10,000 files, 100,000 functions, and millions of rela
 
 ---
 
-## 13. Phase 3 Implementation Roadmap
+## 14. Phase 3 Implementation Roadmap
 
 Once the freeze is lifted, the phase will proceed as follows:
 
