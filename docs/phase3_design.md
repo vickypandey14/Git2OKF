@@ -6,7 +6,7 @@ This document details the architectural design for the **Phase 3 Graph Builder**
 
 ## 1. Graph Module Structure
 
-The `src/graph/` directory will be organized as follows:
+The `src/graph/` directory is organized as follows:
 
 ```
 src/graph/
@@ -42,37 +42,63 @@ Nodes represent structural elements in the repository. We define them with a str
 ```rust
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum NodeType {
+    Repository,
+    Workspace,
+    Package,
+    Crate,
+    Directory,
     File,
-    Function,
+    Namespace,
+    Interface,
+    Trait,
+    Struct,
     Class,
+    Enum,
+    Function,
     Method,
-    Module,
     Import,
     Dependency,
-    Route,
-    Package,
-    Framework,
     Language,
+    Framework,
 }
 ```
+
+### Node Identity Strategy
+
+To optimize graph operations, we separate internal graph keys from external deterministic identifiers:
+* **Internal Graph Key (`NodeId`)**: A lightweight, numeric wrapper `NodeId(u64)` (mapping to `petgraph::graph::NodeIndex`). This guarantees fast traversals, comparison, and minimal memory usage.
+* **Stable External URI (`canonical_identifier`)**: A deterministic String representation of the node's path (e.g., `git2okf://repo-name/src/main.rs#main`). This provides collision resistance and stable serialization across runs.
+
+#### Tradeoffs Evaluated
+
+| Strategy | Pros | Cons | Decision |
+|---|---|---|---|
+| **String IDs Only** | Simple serialization, easy debugging. | Large memory footprint, slower comparisons. | Rejected as primary |
+| **Numeric IDs Only** | High speed, optimal memory footprint. | Unstable across runs, hard to serialize. | Rejected as primary |
+| **Hybrid Identity** | Fast internal operations with stable external mappings. | Slight lookup overhead during indexing. | **Recommended** |
 
 ### Node Struct
 
 ```rust
-use std::collections::HashMap;
+use serde_json::{Map, Value};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+pub struct NodeId(pub u64);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Node {
-    /// A unique identifier constructed deterministically (e.g., FQN or file path)
-    pub id: String,
+    /// Numeric ID for internal graph operations
+    pub id: NodeId,
+    /// Stable, deterministic URI for serialization and stable reference
+    pub canonical_identifier: String,
     /// The name of the symbol or file (e.g., "UserController", "process_data")
     pub name: String,
     /// The classification of the node
     pub node_type: NodeType,
     /// Path to the source file where the node was declared (if applicable)
     pub source_file: Option<String>,
-    /// Open metadata map containing language-specific properties (line ranges, visibility, etc.)
-    pub metadata: HashMap<String, String>,
+    /// Typed metadata map supporting nested structures (arrays, integers, booleans)
+    pub metadata: Map<String, Value>,
 }
 ```
 
@@ -87,47 +113,147 @@ Edges represent directed relationships between nodes.
 ```rust
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum EdgeType {
-    Calls,      // Function/Method calls another Function/Method
-    Imports,    // File imports a Module/File/Symbol
-    Declares,   // File declares a Class or Function; Class declares a Method
-    Uses,       // Class/Function utilizes a Dependency/Package
-    Extends,    // Class inherits from another Class
-    Implements, // Class implements an Interface/Trait
-    DependsOn,  // Package depends on another Package
-    BelongsTo,  // Node belongs to a Namespace/Module
-    Contains,   // Directory/File containment relationships
-    References, // Symbol reference that isn't a direct call
+    Calls,         // Function/Method calls another Function/Method
+    Imports,       // File imports a Module/File/Symbol
+    Declares,      // File declares a Class or Function; Class declares a Method
+    Uses,          // Class/Function utilizes a Dependency/Package
+    Extends,       // Class inherits from another Class
+    Implements,    // Class implements an Interface/Trait
+    DependsOn,     // Package depends on another Package
+    BelongsTo,     // Node belongs to a Namespace/Module
+    Contains,      // Directory/File containment relationships
+    References,    // Symbol reference that isn't a direct call
+    Overrides,     // Method overrides parent method
+    Exports,       // Module exports symbol
+    InstanceOf,    // Variable is an instance of a Class
+    AnnotatedWith, // Symbol is decorated/annotated with metadata
 }
 ```
 
 ### Edge Struct
 
 ```rust
-use std::collections::HashMap;
+use serde_json::{Map, Value};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Edge {
     /// The source NodeId
-    pub source: String,
+    pub source: NodeId,
     /// The target NodeId
-    pub target: String,
+    pub target: NodeId,
     /// The relationship type
     pub edge_type: EdgeType,
-    /// Optional attributes (e.g., line numbers of the call, call frequency)
-    pub metadata: HashMap<String, String>,
+    /// Metadata supporting visibility flags, line ranges, and custom annotations
+    pub metadata: Map<String, Value>,
 }
 ```
 
 ---
 
-## 4. Graph Builder Pipeline
+## 4. GraphRepresentation Definition
 
-Converting `RepositoryParseResult` to `GraphRepresentation` is implemented as a multi-pass pipeline to handle cross-file dependencies and forward references.
+We define `GraphRepresentation` as the master struct that aggregates the graph storage engine, indices, lookup mappings, and statistics.
+
+```rust
+use std::collections::HashMap;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GraphRepresentation {
+    /// In-memory graph storage backed by petgraph
+    pub storage: GraphStorage,
+    /// Bidirectional lookup map for node canonical identifiers to NodeIds
+    pub canonical_index: HashMap<String, NodeId>,
+    /// Global Symbol Table mapping symbol names to target NodeIds
+    pub symbol_table: SymbolTable,
+    /// Repository metadata (e.g., repository_name, branch, commit_count)
+    pub repository_metadata: RepositoryMetadata,
+    /// Computed metrics for static analysis summary
+    pub statistics: GraphStatistics,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RepositoryMetadata {
+    pub name: String,
+    pub active_branch: String,
+    pub total_commits: usize,
+    pub languages: Vec<(String, u8)>, // (language, percentage)
+    pub frameworks: Vec<(String, u8)>, // (framework, confidence)
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GraphStatistics {
+    pub total_nodes: usize,
+    pub total_edges: usize,
+    pub max_depth: usize,
+    pub isolated_nodes: usize,
+}
+```
+
+---
+
+## 5. Architectural Evaluation of Nodes & Edges
+
+To build a language-agnostic repository graph, we categorize AST properties into first-class nodes/edges or metadata fields.
+
+### First-Class Nodes vs. Metadata
+
+* **Repository, Workspace, Package, Crate, Directory, Namespace, Interface, Trait, Struct, Enum, Class**: Configured as first-class nodes. These represent core scoping boundaries, directory structure components, and structural API contracts.
+* **Variable, Constant, Macro, TypeAlias**: Configured as metadata properties on their declaring Scope/File nodes (to prevent graph bloating), unless they are exported globally.
+
+### Phase 3 Edges vs. Deferred Edges
+
+* **Phase 3 Core Edges (Immediate)**:
+  * `Calls`, `Imports`, `Declares`, `Uses`, `Extends`, `Implements`, `DependsOn`, `BelongsTo`, `Contains`, `References`.
+  * `Exports`: Tracks module borders.
+  * `InstanceOf`: Declares type linkages.
+  * `AnnotatedWith`: Links functions/classes to decorators/annotations.
+  * `Overrides`: Direct inheritance relationship.
+* **Deferred Edges (Phase 4 / Advanced Analysis)**:
+  * `Reads`, `Writes`: Relates to variable data-flow analysis, deferred to prevent performance degradation.
+  * `Returns`, `Throws`: Represented as function/method metadata properties rather than edges.
+
+---
+
+## 6. Repository Hierarchy
+
+We enforce a strict containment hierarchy:
+
+$$\text{Repository} \longrightarrow \text{Workspace} \longrightarrow \text{Package} \longrightarrow \text{Directory} \longrightarrow \text{File} \longrightarrow \text{Symbol}$$
+
+This containment hierarchy improves other systems:
+* **OKF Generation**: Maps directories and files directly to hierarchical YAML files.
+* **Architecture Visualization**: Enables collapsible view models (zooming out to Package level, zooming in to Class level).
+* **Dependency Analysis**: Helps flag circular dependencies across package and folder boundaries.
+* **Semantic Search**: Constrains queries to specific sub-modules, namespaces, or workspaces.
+
+---
+
+## 7. Deterministic Node Identity Strategy
+
+Stable external identifiers are built using a URI schema format:
+
+$$\text{git2okf://[repo-name]/[package-name]/[relative-file-path]\#[fully-qualified-name]}$$
+
+* **File Node Example**: `git2okf://my-repo/src/core/errors.rs`
+* **Class Node Example**: `git2okf://my-repo/src/parser/ast.rs#ast::ClassNode`
+* **Method Node Example**: `git2okf://my-repo/src/parser/ast.rs#ast::ClassNode::new`
+
+### Design Compliance
+* **Stable**: Does not change between executions.
+* **Deterministic**: Same file path and naming yields identical IDs.
+* **Collision Resistant**: URI formatting ensures identical class names in different directories remain isolated.
+* **Serialization Friendly**: Simple string formats that write directly to YAML and JSON targets.
+
+---
+
+## 8. Graph Builder Pipeline
+
+Converting `RepositoryParseResult` to `GraphRepresentation` is implemented as a multi-pass pipeline.
 
 ```mermaid
 graph TD
     A[RepositoryParseResult] --> B[Pass 1: Node Extraction]
-    B --> C[Register Files, Languages, Frameworks, Classes, Functions]
+    B --> C[Register Files, Directories, Languages, Frameworks, Classes, Functions]
     C --> D[Pass 2: Containment & Declaration Linkage]
     D --> E[Link File -> Class, File -> Function, Class -> Method]
     E --> F[Pass 3: Global Symbol Table Indexing]
@@ -139,14 +265,14 @@ graph TD
 
 ### Pipeline Details
 
-1. **Node Extraction (Pass 1)**: Traverse all files in the `RepositoryParseResult`. Extract metadata and create nodes for every file, class, trait, function, and external dependency. Assign each node a unique, deterministic ID.
+1. **Node Extraction (Pass 1)**: Traverse all files in the `RepositoryParseResult`. Extract metadata and create nodes for every file, class, trait, function, and external dependency.
 2. **Containment Linkage (Pass 2)**: Create structural hierarchy edges. Link files to their declared classes and functions, and classes to their declared methods (`Declares` / `Contains` edges).
 3. **Symbol Table Generation (Pass 3)**: Traverse the extracted declaration nodes and index their names globally (e.g., mapping class `UserController` to its file node and fully-qualified namespace path).
 4. **Resolution & Relationship Linking (Pass 4)**: Iterate through all unresolved references (imports, require calls, and method invocations). Query the symbol table to resolve the targets. Create directed edges (e.g., `Calls`, `Imports`, `Uses`) between the caller node and target node.
 
 ---
 
-## 5. Symbol Resolution Strategy
+## 9. Symbol Resolution Strategy
 
 Symbol resolution links identifiers (like `User::find()` or `import { component }`) to their actual definitions across different files.
 
@@ -154,7 +280,7 @@ Symbol resolution links identifiers (like `User::find()` or `import { component 
 We maintain a global index inside `resolver.rs`:
 ```rust
 pub struct SymbolDefinition {
-    pub node_id: String,
+    pub node_id: NodeId,
     pub namespace: Option<String>,
     pub file_path: String,
 }
@@ -178,7 +304,7 @@ pub struct SymbolTable {
 
 ---
 
-## 6. Graph Storage Strategy
+## 10. Graph Storage Strategy
 
 To represent the graph structure in memory, we evaluate four options:
 
@@ -213,7 +339,7 @@ pub struct GraphStorage {
 
 ---
 
-## 7. Serialization Strategy
+## 11. Serialization Strategy
 
 The `serializer.rs` module will serialize `GraphRepresentation` for different consumers:
 
@@ -229,7 +355,7 @@ The `serializer.rs` module will serialize `GraphRepresentation` for different co
 
 ---
 
-## 8. Performance Considerations
+## 12. Performance Considerations
 
 For larger projects (e.g., 10,000 files, 100,000 functions, and millions of relationships), building the graph can become a memory and CPU bottleneck.
 
@@ -240,7 +366,7 @@ For larger projects (e.g., 10,000 files, 100,000 functions, and millions of rela
 
 ---
 
-## 9. Phase 3 Implementation Roadmap
+## 13. Phase 3 Implementation Roadmap
 
 Once the freeze is lifted, the phase will proceed as follows:
 
