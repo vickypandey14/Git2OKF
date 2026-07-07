@@ -30,10 +30,10 @@ Introduced code understanding using AST node extractions.
 ## 2. Current Phase: Phase 2 Verification & Stabilization
 
 Due to native OS compiler requirements on tree-sitter wrappers, the architecture is currently under a frozen stabilization state pending local test suites verification.
-- Install native Visual Studio C++ Build Tools on the host machine.
+- Set up WSL (Ubuntu) primary build environment (or Windows MSVC toolchain alternate).
 - Verify feature isolation via separate cargo builds.
 - Ensure all 12 validation, formatting, linting, and testing commands compile and pass successfully.
-- Address any OS-specific compilation or link warnings.
+- Address any environment-specific compilation or link warnings.
 
 ---
 

@@ -84,7 +84,7 @@ We transitioned from naive string scanning to actual code understanding using th
 ## Phase 2 Current Status & Architecture Freeze
 * **Implementation Status**: `IMPLEMENTED`
 * **Verification Status**: `NOT VERIFIED` (Pending local verification checklist completion)
-* **Architecture Freeze**: The project is currently frozen. No new modules, source code modifications, or Phase 3 implementations may begin until local environment dependencies (Microsoft Visual Studio C++ Build Tools) are installed and all verification commands pass successfully.
+* **Architecture Freeze**: The project is currently frozen. No new modules, source code modifications, or Phase 3 implementations may begin until local environment dependencies (either WSL/Ubuntu compiler tools or Windows MSVC Build Tools) are set up and all verification commands pass successfully.
 
 Refer to the root-level [verification.md](file:///c:/Users/vicky/OneDrive/Desktop/Git2OKF/verification.md) for the complete list of mandatory build, format, lint, and test commands.
 

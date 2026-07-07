@@ -44,7 +44,12 @@ This phase transitioned the tool from guessing files to actively reading and und
 
 ## Setup and Usage
 
-Ensure you have the Microsoft Visual Studio C++ Build Tools and Rust installed via `rustup`.
+WSL (Ubuntu) is the officially supported development environment for Git2OKF. 
+
+* For WSL/Ubuntu setup instructions (installing compilers, cmake, openssl-dev, and Rust), follow the [WSL Setup Guide](file:///c:/Users/vicky/OneDrive/Desktop/Git2OKF/docs/wsl_setup.md).
+* Alternatively, if building natively on Windows, you must install the Microsoft Visual Studio C++ Build Tools and Rust.
+
+Refer to [verification.md](file:///c:/Users/vicky/OneDrive/Desktop/Git2OKF/verification.md) for the complete lint/test check list.
 
 ### Basic Compilation
 By default, compiling the engine includes the Rust parser:
