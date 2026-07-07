@@ -5,6 +5,7 @@ use std::fs;
 use std::path::Path;
 use tree_sitter::{Parser as TsParser, Query, QueryCursor};
 
+#[derive(Default)]
 pub struct PythonParser;
 
 impl PythonParser {

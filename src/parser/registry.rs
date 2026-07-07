@@ -1,6 +1,7 @@
 use crate::parser::Parser;
 use std::collections::HashMap;
 
+#[derive(Default)]
 pub struct ParserRegistry {
     parsers:
         HashMap<String, Box<dyn Parser<Output = crate::parser::ast::ParsedFile> + Send + Sync>>,
@@ -8,9 +9,7 @@ pub struct ParserRegistry {
 
 impl ParserRegistry {
     pub fn new() -> Self {
-        Self {
-            parsers: HashMap::new(),
-        }
+        Self::default()
     }
 
     pub fn register(
@@ -24,7 +23,7 @@ impl ParserRegistry {
     pub fn get(
         &self,
         extension: &str,
-    ) -> Option<&Box<dyn Parser<Output = crate::parser::ast::ParsedFile> + Send + Sync>> {
-        self.parsers.get(extension)
+    ) -> Option<&(dyn Parser<Output = crate::parser::ast::ParsedFile> + Send + Sync)> {
+        self.parsers.get(extension).map(|b| &**b)
     }
 }

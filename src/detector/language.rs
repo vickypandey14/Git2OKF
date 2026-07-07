@@ -82,7 +82,7 @@ impl Detector for LanguageDetector {
             }
         }
 
-        languages.sort_by(|a, b| b.percentage.cmp(&a.percentage));
+        languages.sort_by_key(|b| std::cmp::Reverse(b.percentage));
 
         let stats = FileStats {
             total_files,
