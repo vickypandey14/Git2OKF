@@ -88,3 +88,7 @@ We transitioned from naive string scanning to actual code understanding using th
 
 Refer to the root-level [verification.md](file:///c:/Users/vicky/OneDrive/Desktop/Git2OKF/verification.md) for the complete list of mandatory build, format, lint, and test commands.
 
+## 11. Phase 3 Graph Builder (In Progress)
+We are actively building the relationship graph structure.
+* **Phase 3.1: Define Data Types (Complete)**: Implemented Node, Edge, NodeId, NodeType, EdgeType, and canonical URI helpers, verified with JSON/YAML serialization unit tests.
+

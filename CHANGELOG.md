@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - 2026-07-08
 
 ### Added
+- Implemented Phase 3.1 graph data types (NodeId, Node, Edge, NodeType, EdgeType, canonical URI generation, and serialization tests).
 - Added `docs/wsl_setup.md` guiding environment packages installation and Rust toolchain setup under WSL.
 - Added `docs/ROADMAP.md` outlining project phases 1 through 7.
 - Added `verification.md` tracking build, styling, clippy lint, and unit/integration testing checklists.
