@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - 2026-06-29
 
+> [!WARNING]
+> **Phase 2 Implementation Freeze**: Phase 2 is architecturally implemented but **NOT verified** on the local Windows environment due to native C++ compiler dependency requirements (required by tree-sitter wrappers). An architecture freeze is in place. No new features, code changes, or Phase 3 additions will occur until verification commands listed in [verification.md](file:///c:/Users/vicky/OneDrive/Desktop/Git2OKF/verification.md) are run and pass.
+
 ### Added
 - Phase 2 AST Parser Intelligence Architecture.
 - `tree-sitter` integration with `tree-sitter-rust`, `tree-sitter-php`, `tree-sitter-javascript`, and `tree-sitter-python`.

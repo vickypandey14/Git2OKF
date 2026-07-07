@@ -73,12 +73,18 @@ Before moving to Phase 2, the following mandatory structural improvements were m
 * **CI Pipeline**: Created `.github/workflows/test.yml` enforcing strict formatting, zero-warning clippy runs, and successful test suites on every push to main.
 
 ## 10. Phase 2 AST Parser Intelligence
-We successfully transitioned from naive string scanning to actual code understanding using the `tree-sitter` library.
-* **Tree-Sitter Query API**: Implemented lightning-fast, S-expression query extraction for Rust, PHP, JavaScript, and Python.
-* **Strict AST Schema**: Built a universal Intermediate Representation (IR) consisting of `RepositoryParseResult`, `ParsedFile`, `ClassNode`, `FunctionNode`, `ImportNode`, and `CallNode`. This schema heavily enriches the data with `id`, `name`, `visibility`, `parameters`, `is_async`, and `parent_class` attributes.
-* **Parser Registry & Engine**: Developed a dynamic `ParserRegistry` to register language-specific parsers without hardcoding, and a `ParserEngine` to orchestrate file traversal and parsing aggregation.
-* **Feature Flag Compilation**: Updated `Cargo.toml` with strict `[features]` flags (`rust`, `php`, `javascript`, `python`). Developers can now compile selectively using commands like `cargo build --release --features "javascript,php"` to massively reduce build times and binary size.
-* **Graph & Analyzer Scaffolding**: Prepared the architectural skeleton for Phase 3 by defining `src/graph/` (nodes, edges, builder) and `src/analyzer/` (symbol table, resolver).
+We transitioned from naive string scanning to actual code understanding using the `tree-sitter` library.
+* **Tree-Sitter Query API**: Implemented S-expression query extraction for Rust, PHP, JavaScript, and Python.
+* **Strict AST Schema**: Built a universal Intermediate Representation (IR) consisting of `RepositoryParseResult`, `ParsedFile`, `ClassNode`, `FunctionNode`, `ImportNode`, and `CallNode` (in `src/parser/ast.rs`).
+* **Parser Registry & Engine**: Developed a dynamic `ParserRegistry` (`src/parser/registry.rs`) to register language-specific parsers without hardcoding, and a `ParserEngine` (`src/parser/engine.rs`) to orchestrate file traversal and parsing aggregation.
+* **Feature Flag Compilation**: Updated `Cargo.toml` with strict `[features]` flags (`rust`, `php`, `javascript`, `python`). Modules are conditionally compiled behind `#[cfg(feature = "...")]` flags.
+* **Isolated Testing Suite**: Created isolated parser unit tests in `tests/parser_tests.rs` covering code syntax extractions for Rust, PHP, JavaScript, and Python.
+* **Graph & Analyzer Scaffolding**: Scaffolded future directories (`src/graph/` and `src/analyzer/`) for Phase 3 relationship and resolver work.
 
-## Pending Actions / Roadblocks
-* **Rust Environment:** Rust was successfully installed on the local machine via `rustup`. However, compilation (`cargo test`) failed because the **Microsoft Visual Studio C++ Build Tools** (specifically the `link.exe` linker and C compiler required by the `git2` crate) are missing from the host machine. These must be installed to compile and run the CLI.
+## Phase 2 Current Status & Architecture Freeze
+* **Implementation Status**: `IMPLEMENTED`
+* **Verification Status**: `NOT VERIFIED` (Pending local verification checklist completion)
+* **Architecture Freeze**: The project is currently frozen. No new modules, source code modifications, or Phase 3 implementations may begin until local environment dependencies (Microsoft Visual Studio C++ Build Tools) are installed and all verification commands pass successfully.
+
+Refer to the root-level [verification.md](file:///c:/Users/vicky/OneDrive/Desktop/Git2OKF/verification.md) for the complete list of mandatory build, format, lint, and test commands.
+

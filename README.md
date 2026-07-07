@@ -8,7 +8,10 @@ Allow AI agents and LLMs to understand codebases structurally instead of relying
 
 ## Project Status
 
-The project is being developed in strict architectural phases. Currently, both **Phase 1** and **Phase 2** are completely finished. The current status of our capabilities is broken down below in plain terms.
+The project is being developed in strict architectural phases. Currently, **Phase 1** is complete, and **Phase 2** is architecturally implemented but **NOT verified** (pending local verification of native C++ build tools required by `tree-sitter`).
+
+> [!WARNING]
+> **Architecture Freeze**: The project is currently frozen. No Phase 3 work, new modules, or code generation will occur until all verification commands in the root-level [verification.md](file:///c:/Users/vicky/OneDrive/Desktop/Git2OKF/verification.md) are run and pass successfully.
 
 ### Phase 1: Engine Foundation (Complete)
 This phase built the core scaffolding, CLI, network layers, and repository-level metadata extractors.
@@ -23,16 +26,16 @@ This phase built the core scaffolding, CLI, network layers, and repository-level
 | Dependency Extraction | Automatically reads manifest files (like package.json or requirements.txt) to list what external packages the project relies on. | Complete |
 | Security & Validation | Pre-checks repository URLs for errors before attempting downloads and handles network timeouts gracefully. | Complete |
 
-### Phase 2: AST Parser Intelligence (Complete)
+### Phase 2: AST Parser Intelligence (Implemented / Unverified)
 This phase transitioned the tool from guessing files to actively reading and understanding actual code syntax across 4 major languages using `tree-sitter`.
 
 | Feature Area | What it Does (Non-Technical Summary) | Status |
 |---|---|---|
-| Advanced Syntax Parsing | Understands the actual structure of Rust, PHP, Python, and JavaScript code. It knows exactly where functions, classes, and imports live instead of just scanning text. | Complete |
-| Function Call Tracing | Extracts exactly which functions are calling other functions (e.g., identifying that a file calls `User::find()`), setting the stage for deep relationship mapping. | Complete |
-| Universal Syntax Standard | No matter what language it scans, it normalizes the extracted code into a single, unified data structure so AI can understand all codebases equally. | Complete |
-| Smart Language Dispatch | Automatically detects the file type (e.g., `.rs` or `.php`) and routes it to the correct specialized parser without hardcoding. | Complete |
-| Selective Compilation | The system is designed with feature flags so developers can choose to only compile the languages they care about to save time and file size. | Complete |
+| Advanced Syntax Parsing | Understands the actual structure of Rust, PHP, Python, and JavaScript code. It knows exactly where functions, classes, and imports live instead of just scanning text. | Implemented (Pending Verification) |
+| Function Call Tracing | Extracts exactly which functions are calling other functions (e.g., identifying that a file calls `User::find()`), setting the stage for deep relationship mapping. | Implemented (Pending Verification) |
+| Universal Syntax Standard | No matter what language it scans, it normalizes the extracted code into a single, unified data structure so AI can understand all codebases equally. | Implemented (Pending Verification) |
+| Smart Language Dispatch | Automatically detects the file type (e.g., `.rs` or `.php`) and routes it to the correct specialized parser without hardcoding. | Implemented (Pending Verification) |
+| Selective Compilation | The system is designed with feature flags so developers can choose to only compile the languages they care about to save time and file size. | Implemented (Pending Verification) |
 
 ### Quality Assurance (Ongoing)
 | Feature Area | What it Does (Non-Technical Summary) | Status |
